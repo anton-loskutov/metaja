@@ -5,7 +5,6 @@ import java.lang.reflect.Modifier;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.BiFunction;
-import java.util.function.Function;
 
 public class ClassUtils {
 
@@ -65,10 +64,6 @@ public class ClassUtils {
 
     public static boolean isAssignable(Class<?> cSuper, Class<?> cExtends) {
         return isAssignable.apply(cSuper, cExtends);
-    }
-
-    public static boolean isPublic(Class<?> clazz) {
-        return (clazz.getModifiers() & Modifier.PUBLIC) == Modifier.PUBLIC;
     }
 
     public static final BiFunction<Class<?>, Class<?>, Boolean> isAssignable = new BiFunction<Class<?>, Class<?>, Boolean>() {

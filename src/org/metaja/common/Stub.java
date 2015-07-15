@@ -14,13 +14,16 @@ public class Stub /***# implements $iface.getCanonicalName()$ #***/ {
     }
 
     /***
-     for (java.lang.reflect.Method method : iface.getMethods()) {
-        # public void $method.getName()$( #
-        COLLECTIONS.iterate(ARRAYS.asList(method.getParameterTypes()), new int[1], (type, c) -> { # $type.getCanonicalName()$ a$c[0]++$# }, () -> {#,#});
+     REFLECTION.getMethods(iface, STATIC::notModified).forEach((method) -> {
+        # public void $method.it().getName()$( #
+        ITERATION.asStream(method.it().getParameterTypes()).forEach((type) -> {
+            # $type.it().getCanonicalName()$ a$type.ix()$#
+            if (!type.last()) { #,# }
+        });
         # ) { #
         #     stub.run(); #
         # } #
-     }
+     });
      ***/
 
      public static <T> T create(Class<T> iface, Runnable stub) {

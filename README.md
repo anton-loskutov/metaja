@@ -2,7 +2,7 @@
 
 Metaja is library for java that allows to use **metaja templates** for java source code generation at runtime which gives ability to do java metaprogramming. 
 
-## Metaja Templates
+## Metaja templates
 
 **Metaja template** is just a program for generation some text, for a example java code.  
 Metaja template consists of sequence of blocks of two types: **macro** and **output**. 
@@ -145,10 +145,12 @@ public class MetajaHelloSimplified {
 }
 ```
 
-Other more useful examples of templates can be found in sources in _org.metaja.common_ package.
+Other more useful examples of templates can be found in sources in [_org.metaja.common_](https://github.com/anton-loskutov/metaja/tree/master/src/org/metaja/common) package.
 
-Metaja written in java 8 and requires only jdk 1.8 (metaja uses [java compiler api](http://docs.oracle.com/javase/8/docs/api/javax/tools/JavaCompiler.html) from **tools.jar** so you can not use it with jre)
+## Metaja dependencies
 
-## Metaja Templates In Depth
+Metaja was written for [Kabuki project](https://github.com/anton-loskutov/kabuki) in java 8 and requires only jdk 1.8 (metaja uses [java compiler api](http://docs.oracle.com/javase/8/docs/api/javax/tools/JavaCompiler.html) from **tools.jar** therefore you can not use it with jre)
+
+## Metaja templates in depth
 
 _TODO:_

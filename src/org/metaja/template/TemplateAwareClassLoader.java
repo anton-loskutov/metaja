@@ -1,7 +1,6 @@
 package org.metaja.template;
 
 import org.metaja.compiler.JavaAwareClassLoader;
-import org.metaja.template.ops.TemplateOps;
 import org.metaja.utils.ClassUtils;
 import org.metaja.utils.EscapedWriter;
 import org.metaja.utils.ResourceUtils;

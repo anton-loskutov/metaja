@@ -5,37 +5,57 @@ package org.metaja.common;
 import org.metaja.Metaja;
 import org.metaja.utils.ClassUtils;
 
-import java.util.function.Consumer;
 
-public class Composite implements Consumer/***#<$iface.getCanonicalName()$> , $iface.getCanonicalName()$ #***/ {
+public class Composite<T /***# extends $iface.getCanonicalName()$ #***/> implements IComposite<T>/***#, $iface.getCanonicalName()$ #***/ {
 
-    private volatile /***$ iface.getCanonicalName() $//***/ Object delegate;
+    private volatile T delegate;
 
-    public Composite(/***$ iface.getCanonicalName() $//***/ Object delegate) {
+    private Composite() {
+    }
+
+    @Override
+    public T instance() {
+        @SuppressWarnings("unchecked")
+        T composite = (T) this;
+
+        return composite;
+    }
+
+    @Override
+    public void delegate(T delegate) {
         this.delegate = delegate;
     }
 
     /***
-    for (java.lang.reflect.Method method : iface.getMethods()) {
-        # public void $method.getName()$( #
-        COLLECTIONS.iterate(ARRAYS.asList(method.getParameterTypes()), new int[1], (type, c) -> { # $type.getCanonicalName()$ a$c[0]++$# }, () -> {#,#});
+     REFLECTION.getMethods(iface, STATIC::notModified).forEach((method) -> {
+        # public void $method.it().getName()$( #
+        ITERATION.asStream(method.it().getParameterTypes()).forEach((type) -> {
+            # $type.it().getCanonicalName()$ a$type.ix()$#
+            if (!type.last()) { #,# }
+        });
         # ) { #
-        # delegate.$method.getName()$(#
-        COLLECTIONS.iterate(ARRAYS.asList(method.getParameterTypes()), new int[1], (type, c) -> { #a$c[0]++$# }, () -> {#,#});
+        # delegate.$method.it().getName()$(#
+        ITERATION.asStream(method.it().getParameterTypes()).forEach((type) -> {
+            #a$type.ix()$#
+            if (!type.last()) { #,# }
+        });
         #); } #
-     }
+     });
      ***/
 
-    @Override
-    public void accept(/***$iface.getCanonicalName()$//***/Object delegate) {
-        this.delegate = delegate;
-    }
-
-    public static <T> T create(Class<T> iface, T delegate) {
+    /***/
+    public static <T> IComposite<T> create(Class<T> iface, T delegate) {
         if (!iface.isInterface()) {
             throw new IllegalArgumentException();
         }
-        return ClassUtils.newInstance(Metaja.<T>load(Composite.class.getName(), new Object[] { iface } ), delegate);
+
+        @SuppressWarnings("unchecked")
+        IComposite<T> instance = (IComposite<T>)ClassUtils.newInstance(true, Metaja.<T>load(Composite.class.getName(), new Object[]{iface}));
+
+        instance.delegate(delegate);
+
+        return instance;
     }
+    /***/
 }
 /*** } ***/

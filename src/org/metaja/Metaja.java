@@ -29,7 +29,7 @@ public class Metaja {
     }
 
     public static <C> Class<C> load(ClassLoader classLoader, String className, String templatePath, Charset cs, Object[] templateArgs) {
-        return load(classLoader, className, translateTemplatePathToFilename(templatePath), ResourceUtils.readResource(defaultClassLoader(), templatePath, cs), templateArgs);
+        return load(classLoader, className, templatePath.substring(templatePath.lastIndexOf('/') + 1), ResourceUtils.readResource(defaultClassLoader(), templatePath, cs), templateArgs);
     }
 
     public static <C> Class<C> load(String className, String templateFileName, String templateFileContent, Object[] templateArgs) {
@@ -58,9 +58,5 @@ public class Metaja {
 
     private static ClassLoader defaultClassLoader() {
         return ClassLoader.getSystemClassLoader();
-    }
-
-    private static String translateTemplatePathToFilename(String path) {
-        return path.trim().endsWith(".java") ? path.trim() : path.trim() + ".java";
     }
 }

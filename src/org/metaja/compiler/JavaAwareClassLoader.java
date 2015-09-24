@@ -18,11 +18,11 @@ public class JavaAwareClassLoader extends ClassLoader {
         super(parent);
     }
 
-    public synchronized String[] compile(String javaSourceStr) throws IllegalArgumentException {
+    public synchronized String[] compile(String javaSourceStr) throws JavaCompileException {
         return compile(null, javaSourceStr);
     }
 
-    public synchronized String[] compile(String javaFileName, String javaFileContent) throws IllegalArgumentException {
+    public synchronized String[] compile(String javaFileName, String javaFileContent) throws JavaCompileException {
         final JavaCompiler javac = ToolProvider.getSystemJavaCompiler();
         final DiagnosticCollector<JavaFileObject> diagnosticCollector = new DiagnosticCollector<>();
         final HashSet<String> compiledClassesNames = new HashSet<>();
@@ -76,31 +76,12 @@ public class JavaAwareClassLoader extends ClassLoader {
         }
         final JavaCompiler.CompilationTask task = javac.getTask(compilationOut, manager, diagnosticCollector, compilationOptions, null, compilationUnits);
         if (!task.call()) {
-            StringBuilder errors = new StringBuilder();
             for (Diagnostic<? extends JavaFileObject> diag : diagnosticCollector.getDiagnostics()) {
                 if (javaFileName == null && diag.getCode().equals("compiler.err.class.public.should.be.in.file")) {
                     return compile(((ClientCodeWrapper.DiagnosticSourceUnwrapper) diag).d.getArgs()[0] + ".java", javaFileContent);
                 }
-                if (diag.getKind() == Diagnostic.Kind.ERROR || diag.getKind() == Diagnostic.Kind.MANDATORY_WARNING) {
-                    errors.append(String.format("[line: %d, column: %d]: '%s'\n",
-                            diag.getLineNumber(),
-                            diag.getColumnNumber(),
-                            diag.getMessage(Locale.US)
-                    ));
-                }
             }
-            String outStr = compilationOut.toString();
-            if (errors.length() == 0) {
-                throw new Error(
-                        "Can not compile for unknown reason!\n-------\n" +
-                                formatCode(javaFileContent) + "\n-------\n" +
-                                (outStr.isEmpty() ? "" : outStr + "-------\n"));
-            }
-            throw new IllegalArgumentException(
-                    "Can not compile!\n-------\n" +
-                            formatCode(javaFileContent) + "\n-------\n" +
-                            (outStr.isEmpty() ? "" : outStr + "-------\n") +
-                            errors.toString() + "-------");
+            throw new JavaCompileException(compilationOut.toString(), diagnosticCollector.getDiagnostics());
         }
         return compiledClassesNames.toArray(new String[compiledClassesNames.size()]);
     }
@@ -152,18 +133,5 @@ public class JavaAwareClassLoader extends ClassLoader {
             return Collections.emptyList();
         }
         return compiledInPackage.values();
-    }
-
-    // ======= public static =======
-
-    public static String formatCode(String code) {
-        StringBuilder codeFormatted = new StringBuilder();
-        String[] codeLines = code.split("\\n");
-        int l = Math.max(1, (int) Math.ceil(Math.log10(codeLines.length)));
-        for (int i = 0; i < codeLines.length; i++) {
-            codeFormatted.append(String.format("%1$" + l + "d | %2$s\n", i + 1, codeLines[i]));
-        }
-        codeFormatted.setLength(codeFormatted.length() - 1);
-        return codeFormatted.toString();
     }
 }

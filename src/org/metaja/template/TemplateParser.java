@@ -52,7 +52,7 @@ public class TemplateParser {
                                 t.setWriteType(TemplateWriter.WriteType.MACRO_VALUE);
                                 buks = true;
                             }
-                        } else if (c == ESCAPE) {
+                        } else if (c == ESCP) {
                             escape = true;
                         } else {
                             t.write(c);
@@ -77,7 +77,7 @@ public class TemplateParser {
 
     private static final char DIEZ = '#';
     private static final char BUKS = '$';
-    private static final char ESCAPE = '\\';
+    private static final char ESCP = '\\';
 
     private static final String O = "/***";
     private static final String C = "***/";

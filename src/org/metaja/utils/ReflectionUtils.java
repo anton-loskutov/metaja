@@ -1,6 +1,7 @@
 package org.metaja.utils;
 
 import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
@@ -8,7 +9,10 @@ public class ReflectionUtils {
 
     public enum Modifier {
         PUBLIC(java.lang.reflect.Modifier.PUBLIC),
+        PROTECTED(java.lang.reflect.Modifier.PROTECTED),
         PRIVATE(java.lang.reflect.Modifier.PRIVATE),
+
+        ABSTRACT(java.lang.reflect.Modifier.ABSTRACT),
         STATIC(java.lang.reflect.Modifier.STATIC),
         ;
 
@@ -35,8 +39,8 @@ public class ReflectionUtils {
         }
     }
 
-    public static Stream<Iteration<Method>> getMethods(Class<?> clazz, Predicate<Method> filter) {
-        return Iteration.asStream(Stream.of(clazz.getMethods()).filter(filter).iterator());
+    public static Stream<IterationUtils.Iteration<Method>> getMethods(Class<?> clazz, Predicate<Method> filter) {
+        return IterationUtils.stream(Stream.of(clazz.getMethods()).filter(filter).iterator());
     }
 
     public static boolean isPrimitive(Class c) {
@@ -58,7 +62,7 @@ public class ReflectionUtils {
     private ReflectionUtils() {
     }
 
-    // for TemplateOps
+    // for org.metaja.template.TemplateOps
     @Deprecated
     public static ReflectionUtils INSTANCE = new ReflectionUtils();
 }

@@ -13,7 +13,7 @@ Metaja template consists of sequence of blocks of two types: **macro** and **out
 
 Very first block should be a macro block and it should begin with template's signature - list of parameters in round brackets, just like java method signature without method name. Template's signature should be followed by opening a curly bracket. The last block should also be a macro block and it should ends with a closing curly bracket. This convention made metaja parsing engine very simple.    
 
-Simple templates:
+Simple template:
 ```java
 /*** (boolean world) { ***/   
 public static Hello {

@@ -16,7 +16,7 @@ public class Stub /***# implements $iface.getCanonicalName()$ #***/ {
     /***
      REFLECTION.getMethods(iface, STATIC::notModified).forEach((method) -> {
         # public void $method.it().getName()$( #
-        ITERATION.asStream(method.it().getParameterTypes()).forEach((type) -> {
+        ITERATION.stream(method.it().getParameterTypes()).forEach((type) -> {
             # $type.it().getCanonicalName()$ a$type.ix()$#
             if (!type.last()) { #,# }
         });

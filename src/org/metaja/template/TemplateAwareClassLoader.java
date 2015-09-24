@@ -1,6 +1,7 @@
 package org.metaja.template;
 
 import org.metaja.compiler.JavaAwareClassLoader;
+import org.metaja.compiler.JavaCompileException;
 import org.metaja.utils.ClassUtils;
 import org.metaja.utils.EscapedWriter;
 import org.metaja.utils.ResourceUtils;
@@ -33,29 +34,12 @@ public class TemplateAwareClassLoader extends JavaAwareClassLoader {
         super(parent);
     }
 
-    public synchronized String[] compile(String templateFileName, String templateFileContent, Object... args) throws IllegalArgumentException {
-        try {
-            Generator generator = createGenerator(templateFileContent);
-            String javaCode = generator.generate(this, args);
-            String[] compiledClassesNames = compile(templateFileName, javaCode);
-
-            if (DEBUG_CODE) {
-                System.out.println("------ result code ------");
-                System.out.println(formatCode(javaCode));
-                System.out.println("-------------------------");
-            }
-
-            return compiledClassesNames;
-
-        } catch (IllegalArgumentException e) {
-            throw new IllegalArgumentException("Can not compile template with args ("
-                    + stream(args).map(o -> o == null ? "null" : o.getClass().getName()).collect(joining(", "))
-                    + "):\n" + formatCode(templateFileContent), e);
-        }
-    }
-
     public synchronized String[] compile(String template, Object... args) throws IllegalArgumentException {
         return compile(null, template, args);
+    }
+
+    public synchronized String[] compile(String templateFileName, String templateFileContent, Object... args) throws TemplateCompileException {
+        return compile(templateFileName, templateFileContent, templateFileName, args);
     }
 
     public synchronized String[] compileResource(String path, String charsetName, boolean argId, Object... args) {
@@ -72,13 +56,56 @@ public class TemplateAwareClassLoader extends JavaAwareClassLoader {
                 System.arraycopy(args, 0, argsNew, 1, args.length);
                 args = argsNew;
             }
-            compiledClasses = compile(ResourceUtils.readResource(this, path, charset), args);
+            compiledClasses = compile(path.substring(path.lastIndexOf('/') + 1), ResourceUtils.readResource(this, path, charset), null, args);
             cache.put(key, compiledClasses);
         }
         return compiledClasses;
     }
 
     // ====== private ======
+
+    private synchronized String[] compile(String templateFileName, String templateFileContent, String generatedCodeFileName, Object... args) throws TemplateCompileException {
+        try {
+
+            // 1. Create code generator from template
+            Generator generator;
+            try {
+                generator = createGenerator(templateFileContent);
+
+            } catch (JavaCompileException e) {
+                throw e.initDetailsWithFileName(templateFileName);
+            }
+
+            // 2. Generate code
+            String javaCode = generator.generate(this, args);
+
+            // 3. Compile generated code
+            String[] compiledClassesNames;
+            try {
+                compiledClassesNames = compile(generatedCodeFileName, javaCode);
+
+                if (DEBUG_CODE) {
+                    System.out.println("------ result code ------");
+                    System.out.println(formatCode(javaCode));
+                    System.out.println("-------------------------");
+                }
+
+            } catch (JavaCompileException e) {
+                throw e.initDetailsWithFileContent(formatCode(javaCode));
+            }
+
+            return compiledClassesNames;
+
+        } catch (Throwable e) {
+            if (templateFileName != null) {
+                throw new TemplateCompileException(
+                        "Can not compile template '" + templateFileName + "' with args (" + stream(args).map(String::valueOf).collect(joining(", ")) + ")", e);
+            } else {
+                throw new TemplateCompileException(
+                        "Can not compile template with args (" + stream(args).map(String::valueOf).collect(joining(", ")) + ")\n" + formatCode(templateFileContent), e);
+            }
+        }
+    }
 
     private long generatorsCounter = 1;
     private final JavaAwareClassLoader generatorsClassLoader = new JavaAwareClassLoader(ClassLoader.getSystemClassLoader());
@@ -91,7 +118,7 @@ public class TemplateAwareClassLoader extends JavaAwareClassLoader {
         private int line = 1;
         private TemplateAwareClassLoader classLoader;
 
-        public final synchronized String generate(TemplateAwareClassLoader classLoader, Object ... args) {
+        public final synchronized String generate(TemplateAwareClassLoader classLoader, Object ... args) throws IllegalArgumentException {
             try {
                 this.classLoader = classLoader;
 
@@ -121,7 +148,7 @@ public class TemplateAwareClassLoader extends JavaAwareClassLoader {
         }
 
         protected final String IMPORT_DYN(String templatePath, String charsetName, boolean argId, Object ... args) {
-            return String.format("((%s)getClass().getClassLoader()).compileResource(\"%s\", \"%s\", %s %s)",
+            return String.format("/** IMPORT_DYN **/ ((%s)getClass().getClassLoader()).compileResource(\"%s\", \"%s\", %s %s)",
                     TemplateAwareClassLoader.class.getName(),
                     templatePath,
                     charsetName,
@@ -135,7 +162,7 @@ public class TemplateAwareClassLoader extends JavaAwareClassLoader {
         }
 
         protected final String NEW(String className, Object ... args) {
-            return String.format("%s.newInstance(%s.<%s>loadClass(this.getClass().getClassLoader(), \"%s\") %s);",
+            return String.format("/** NEW **/ %s.newInstance(%s.<%s>loadClass(this.getClass().getClassLoader(), \"%s\") %s);",
                     ClassUtils.class.getName(),
                     ClassUtils.class.getName(),
                     className,
@@ -145,7 +172,7 @@ public class TemplateAwareClassLoader extends JavaAwareClassLoader {
         }
 
         protected final String NEW_DYN(String className, String resultType, Object ... args) {
-            return String.format("%s.newInstance(%s.<%s>loadClass(this.getClass().getClassLoader(), %s) %s);",
+            return String.format("/** NEW_DYN **/ %s.newInstance(%s.<%s>loadClass(this.getClass().getClassLoader(), %s) %s);",
                     ClassUtils.class.getName(),
                     ClassUtils.class.getName(),
                     resultType,
@@ -155,7 +182,7 @@ public class TemplateAwareClassLoader extends JavaAwareClassLoader {
         }
     }
 
-    private Generator createGenerator(String template) {
+    private Generator createGenerator(String template) throws JavaCompileException {
         try {
             String generatorClassName = Generator.class.getSimpleName() + "_" + generatorsCounter++;
             String generatorPackageName = TemplateAwareClassLoader.class.getPackage().getName();
@@ -235,5 +262,16 @@ public class TemplateAwareClassLoader extends JavaAwareClassLoader {
         } catch (ClassNotFoundException | InstantiationException | IllegalAccessException e) {
             throw new AssertionError(e);
         }
+    }
+
+    private static String formatCode(String code) {
+        StringBuilder codeFormatted = new StringBuilder();
+        String[] codeLines = code.split("\\n");
+        int l = Math.max(1, (int) Math.ceil(Math.log10(codeLines.length)));
+        for (int i = 0; i < codeLines.length; i++) {
+            codeFormatted.append(String.format("%1$" + l + "d | %2$s\n", i + 1, codeLines[i]));
+        }
+        codeFormatted.setLength(codeFormatted.length() - 1);
+        return codeFormatted.toString();
     }
 }

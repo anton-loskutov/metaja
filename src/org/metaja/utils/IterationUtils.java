@@ -3,29 +3,34 @@ package org.metaja.utils;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 import java.util.Spliterators;
-import java.util.function.Predicate;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
-public class Iteration<T> {
+public class IterationUtils {
 
-    private T value;
-    private int index;
-    private boolean last;
+    public static class Iteration<T> {
 
-    public T it() {
-        return value;
+        private T value;
+        private int index;
+        private boolean last;
+
+        public T it() {
+            return value;
+        }
+
+        public int ix() {
+            return index;
+        }
+
+        public boolean last() {
+            return last;
+        }
+
+        private Iteration() {
+        }
     }
 
-    public int ix() {
-        return index;
-    }
-
-    public boolean last() {
-        return last;
-    }
-
-    public static <T> Stream<Iteration<T>> asStream(Iterator<T> iterator) {
+    public static <T> Stream<Iteration<T>> stream(Iterator<T> iterator) {
         return StreamSupport.stream(Spliterators.spliteratorUnknownSize(new Iterator<Iteration<T>>() {
             private final Iteration<T> iteration = new Iteration<>();
             private boolean hasNext = iterator.hasNext();
@@ -49,7 +54,7 @@ public class Iteration<T> {
         }, 0), false);
     }
 
-    public static <T> Stream<Iteration<T>> asStream(T[] array) {
+    public static <T> Stream<Iteration<T>> stream(T[] array) {
         return StreamSupport.stream(Spliterators.spliteratorUnknownSize(new Iterator<Iteration<T>>() {
             private final Iteration<T> iteration = new Iteration<>();
             private final int indexLast = array.length - 1;
@@ -73,15 +78,10 @@ public class Iteration<T> {
         }, 0), false);
     }
 
-    public static <T> Predicate<Iteration<T>> it(Predicate<T> p) {
-        return (Iteration<T> t) -> p.test(t.it());
+    private IterationUtils() {
     }
 
-
-    private Iteration() {
-    }
-
-    // for TemplateOps
+    // for org.metaja.template.TemplateOps
     @Deprecated
-    public static Iteration INSTANCE = new Iteration();
+    public static IterationUtils INSTANCE = new IterationUtils();
 }

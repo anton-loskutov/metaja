@@ -29,13 +29,13 @@ public class Composite<T /***# extends $iface.getCanonicalName()$ #***/> impleme
     /***
      REFLECTION.getMethods(iface, STATIC::notModified).forEach((method) -> {
         # public void $method.it().getName()$( #
-        ITERATION.asStream(method.it().getParameterTypes()).forEach((type) -> {
+        ITERATION.stream(method.it().getParameterTypes()).forEach((type) -> {
             # $type.it().getCanonicalName()$ a$type.ix()$#
             if (!type.last()) { #,# }
         });
         # ) { #
         # delegate.$method.it().getName()$(#
-        ITERATION.asStream(method.it().getParameterTypes()).forEach((type) -> {
+        ITERATION.stream(method.it().getParameterTypes()).forEach((type) -> {
             #a$type.ix()$#
             if (!type.last()) { #,# }
         });
